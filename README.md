@@ -1,0 +1,1 @@
+# hr_all_addons
