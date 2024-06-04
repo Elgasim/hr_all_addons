@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <record id="view_employee_rotation_form_inherit" model="ir.ui.view">
+			<field name="name">employee.rotation.form</field>
+			<field name="model">employee.rotation</field>
+      <field name="inherit_id" ref="employee_rotation.view_employee_rotation_form"/>
+			<field name="arch" type="xml">
+        <xpath expr="//field[@name='n_department_id']" position="after">
+          <field name="company_id"/>
+          <field name="n_company_id"/>
+        </xpath>
+      </field>
+    </record>
+
+    <record id="view_employee_rotation_tree_inherit" model="ir.ui.view">
+			<field name="name">employee.rotation.form</field>
+			<field name="model">employee.rotation</field>
+      <field name="inherit_id" ref="employee_rotation.view_employee_rotation_tree"/>
+			<field name="arch" type="xml">
+          <xpath expr="//field[@name='department_id']" position="after">
+            <field name="company_id"/>
+          </xpath>
+          <xpath expr="//field[@name='n_department_id']" position="after">
+            <field name="n_company_id"/>
+          </xpath>
+      </field>
+    </record>
+
+
+  </data>
+</odoo>

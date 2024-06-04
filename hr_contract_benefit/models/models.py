@@ -1,0 +1,130 @@
+# -*- coding: utf-8 -*-
+import datetime
+from odoo import models, fields, api, _
+from odoo.exceptions import except_orm, Warning, RedirectWarning, UserError
+from dateutil import relativedelta
+from datetime import datetime as dt
+import odoo.addons.decimal_precision as dp
+from datetime import datetime, timedelta
+
+class HRGradeBenfit(models.Model):
+    _name='hr.grade.benefits'
+    _description = 'Grade Benefits'
+    
+    @api.constrains('code')
+    def _check_code(self):
+        ids = self.env['hr.grade.benefits'].search([('id','!=',self.id),('code','=',self.code)])
+        if len(ids)>0:
+            raise UserError(_('Code Should Be Unique!'))
+        
+    
+    name  = fields.Char(string='Name' , required=True, )
+    type  = fields.Selection([
+        ('fixed', 'Fixed Amount'),
+        ('percentage','Percentage'),
+    ], string='Type', required=True, default='fixed')
+    code  = fields.Char(string='Salary Rule Code', required=True,)
+    percentage = fields.Float(string='Percentage (%)')
+    amount = fields.Float(string='Amount')
+    active = fields.Boolean(string='Active', default=True)
+
+
+
+
+class HRSalaryBenfits(models.Model):
+    _name='hr.salary.benefits'
+    _description = 'Salary Benefits'
+
+    name  = fields.Char(string='Name' , required=True, )
+    type  = fields.Selection([
+        ('fixed', 'Fixed Amount'),
+        ('percentage','Percentage'),
+    ], string='Type', required=True, default='fixed')
+    code  = fields.Char(string='Salary Rule Code', required=True,)
+    percentage = fields.Float(string='Percentage (%)')
+    amount = fields.Float(string='Amount')
+    contract_id = fields.Many2one('hr.contract', string='')
+    benifit_id = fields.Many2one('hr.grade.benefits')
+    active = fields.Boolean(string='Active', default=True)
+
+
+
+class Contract(models.Model):
+    _inherit = 'hr.contract'
+
+    emp_code = fields.Char(string='Employee Code', related="employee_id.emp_code")
+    salary_benefit_ids = fields.One2many('hr.salary.benefits', 'contract_id', string='Salary Benefits')
+    basic = fields.Float(string='Basic')
+    total_allowance = fields.Float(string='Total Allowance', compute="get_total_allownace", store=True)
+    wage = fields.Monetary(string='Gross', compute="get_gross", store=True, required=False)
+    active = fields.Boolean(string='Active', default=True)
+
+
+    def get_benifits(self):
+        # raise UserError(123)
+        for rec in self:
+            for line in rec.env['hr.grade.benefits'].search([('id','not in', rec.salary_benefit_ids.mapped('benifit_id').ids)]):
+                rec.env['hr.salary.benefits'].create({
+                    'name': line.name,
+                    'type': line.type,
+                    'code': line.code,
+                    'percentage': line.percentage,
+                    'amount': line.amount,
+                    'contract_id': rec.id,
+                    'benifit_id': line.id
+                })
+            rec.compute_amount()
+
+
+    @api.onchange('salary_benefit_ids','wage','salary_benefit_ids.percentage')
+    def compute_amount(self):
+        for rec in self:
+            for line in self.salary_benefit_ids:
+                if line.type == 'percentage':
+                    line.amount = (line.percentage/100) * rec.basic
+                else:
+                    pass
+
+    @api.depends('salary_benefit_ids')
+    def get_total_allownace(self):
+        for rec in self:
+            rec.total_allowance = sum(rec.salary_benefit_ids.mapped('amount'))
+
+
+    @api.depends('basic','salary_benefit_ids')
+    def get_gross(self):
+        for rec in self:
+            total_allowance = sum(rec.salary_benefit_ids.mapped('amount'))
+            rec.wage =  total_allowance + rec.basic
+
+
+    @api.onchange('basic', 'salary_benefit_ids')
+    def get_amount_perecentage(self):
+        for rec in self:
+            for line in rec.salary_benefit_ids:
+                if line.type == 'percentage':
+                    line.amount = ((line.percentage) / 100) * rec.basic
+                else:
+                    pass
+
+
+    def mail_reminder(self):
+        """Sending trial period date notification for ID and Passport and Visa to HR Section Head and Cc TO employee"""
+
+        now = datetime.now() + timedelta(days=1)
+        date_now = now.date()
+        match = self.search([])
+        for i in match:
+            if i.trial_date_end:
+                trial_exp_date = fields.Date.from_string(i.trial_date_end) - timedelta(days=40)
+                if date_now >= trial_exp_date:
+                    mail_content = "  Hello  "  ",<br> The trial balance for the contract of " + str(i.employee_id.name) + " # "  + str(i.employee_id.identification_id) +" " + "is going to expire on " + \
+                                   str(i.trial_date_end) + ". Please renew it before expiry date"
+                    main_content = {
+                        'subject': _('Contract Expire On %s') % (i.trial_date_end),
+                        'author_id': self.env.user.partner_id.id,
+                        'body_html': mail_content,
+                        'email_to': i.employee_id.work_email,
+                    }
+                    self.env['mail.mail'].sudo().create(main_content).send()
+    

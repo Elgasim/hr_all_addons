@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record model="ir.cron" id="employee_transfer_scheduler">
+            <field name="name">HR Transfer: Schedule Employee Transfer</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model_id" ref="o_employee_rotation_multicompany.model_employee_transfer"/>
+            <field name="state">code</field>
+            <field name="code">model.schedule_transfer()</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record model="ir.cron" id="employee_rotation_scheduler">
+            <field name="name">HR Rotation: Schedule Employee Rotation</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model_id" ref="hr_employee_rotation.model_employee_rotation"/>
+            <field name="state">code</field>
+            <field name="code">model.schedule_rotation()</field>
+        </record>
+    </data>
+</odoo>

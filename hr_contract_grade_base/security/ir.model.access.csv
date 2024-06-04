@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+hr_grade_conf_management_employee,Hr_grade_conf_management_employee_access,model_hr_grade_configuration,base.group_user,1,0,0,0
+hr_grade_conf_management_admin,Hr_grade_conf_management_manager_access,model_hr_grade_configuration,hr.group_hr_manager,1,1,1,1
+hr_grade_conf_management_officer,Hr_grade_conf_management_officer_access,model_hr_grade_configuration,hr.group_hr_manager,1,1,1,1
+hr_grade_line_management_employee,Hr_grade_line_management_employee_access,model_hr_grade_line,base.group_user,1,0,0,0
+hr_grade_line_management_admin,Hr_grade_line_management_manager_access,model_hr_grade_line,hr.group_hr_manager,1,1,1,1
+hr_grade_line_management_officer,Hr_grade_line_management_officer_access,model_hr_grade_line,hr.group_hr_manager,1,1,1,1
+
